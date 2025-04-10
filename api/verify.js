@@ -1,15 +1,17 @@
-export default function handler(req, res) {
-  const VERIFY_TOKEN = 'wrenchmaster-3vX8T9pKg7a6Q2LmCz1RbDYeZoUv';
-
+export default async function handler(req, res) {
   if (req.method === 'GET') {
-    const token = req.query.verification_token;
+    const challenge = req.query.challenge_code;
 
-    if (token === VERIFY_TOKEN) {
-      res.status(200).send(token);
-    } else {
-      res.status(403).send('Forbidden');
+    if (!challenge) {
+      return res.status(400).json({ error: 'Missing challenge_code' });
     }
-  } else {
-    res.status(405).send('Method Not Allowed');
+
+    // Respond exactly as eBay expects
+    return res.status(200).json({
+      challengeResponse: challenge,
+    });
   }
+
+  // Just in case they POST later
+  res.status(405).end();
 }
