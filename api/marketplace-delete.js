@@ -1,12 +1,11 @@
 export default async function handler(req, res) {
-  if (req.method === 'GET') {
-    // eBay verification challenge
-    const challenge = req.query.challenge_code;
-    const verificationToken = 'wrenchmaster-3vX8T9pKg7a6Q2LmCz1RbDYeZoUv';
+if (req.method === 'GET') {
+  const challenge = req.query.challenge_code;
+  const verificationToken = 'wrenchmasterparts4profitverification';
 
-    res.status(200).json({
-      challengeResponse: challenge
-    });
+  res.status(200).json({
+    challengeResponse: challenge
+  });
   } else if (req.method === 'POST') {
     // Marketplace deletion notification received
     const event = req.body;
