@@ -16,14 +16,29 @@ export default async function handler(req, res) {
 
   // Make eBay API call
   const query = req.query.q || 'honda civic radio';
-  const response = await fetch(`${EBAY_ENDPOINT}?q=${encodeURIComponent(query)}&limit=10`, {
+  const sort = req.query.sort || 'recent';
+
+  const response = await fetch(`${EBAY_ENDPOINT}?q=${encodeURIComponent(query)}&limit=50`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
   });
 
-  const data = await response.json();
-  res.status(200).json(data);
+  const apiData = await response.json();
 
-  // Triggering first deploy
+  // Filter results
+  const filtered = (apiData.itemSummaries || []).filter(item =>
+    item.image?.imageUrl &&
+    item.condition === 'USED' &&
+    item.itemLocation?.country === 'US' &&
+    item.sellingStatus?.sold === true
+  );
+
+  // Sort results
+  const sorted = [...filtered].sort((a, b) => {
+    if (sort === 'price') return b.price.value - a.price.value;
+    return new Date(b.listingDate || 0) - new Date(a.listingDate || 0); // sort=recent is default
+  });
+
+  res.status(200).json(sorted);
 }
