@@ -1,0 +1,23 @@
+{
+  "name": "parts4profits-api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mfarwell90/parts4profits-api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mfarwell90/parts4profits-api/issues"
+  },
+  "homepage": "https://github.com/mfarwell90/parts4profits-api#readme",
+  "description": "",
+  "dependencies": {
+    "mailersend": "^2.5.0"
+  }
+}
