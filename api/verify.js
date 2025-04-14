@@ -43,7 +43,7 @@ export default async function handler(req, res) {
         .setFrom(new Sender(process.env.ALERT_EMAIL, "Parts4Profits"))
         .setTo([new Recipient(process.env.ALERT_EMAIL, "Matthew")])
         .setSubject("🚨 eBay Marketplace Deletion Notification")
-        .setText(`New eBay Deletion Event:\n\n${JSON.stringify(event, null, 2)}`);
+        .setText("Your API has successfully received a marketplace account deletion notification from eBay.");
 
       await mailerSend.email.send(emailParams);
 
