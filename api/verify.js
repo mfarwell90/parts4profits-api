@@ -25,18 +25,21 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     try {
+      const event = req.body;
+
+      // Optional: email yourself the event payload
       const emailParams = new EmailParams()
         .setFrom(new Sender(process.env.ALERT_EMAIL, "Parts4Profits"))
-        .setTo([new Recipient(process.env.MAIL_FROM_EMAIL, "Matthew")])
-        .setSubject("🚨 eBay Marketplace Deletion Notice Received")
-        .setText("Your API has successfully received a marketplace account deletion notification from eBay.");
+        .setTo([new Recipient(process.env.ALERT_EMAIL, "Matthew")])
+        .setSubject("🚨 eBay Marketplace Deletion Notification")
+        .setText(`New eBay Deletion Event:\n\n${JSON.stringify(event, null, 2)}`);
 
       await mailerSend.email.send(emailParams);
 
       return res.status(200).json({ message: "Notification received and email sent." });
     } catch (error) {
-      console.error("Error sending email:", error);
-      return res.status(500).json({ error: "Failed to send email." });
+      console.error("POST handler error:", error);
+      return res.status(500).json({ error: "Failed to handle notification." });
     }
   }
 
