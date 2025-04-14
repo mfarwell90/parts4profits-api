@@ -26,7 +26,7 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
       const emailParams = new EmailParams()
-        .setFrom(new Sender(process.env.MAIL_FROM_EMAIL, "Parts4Profits"))
+        .setFrom(new Sender(process.env.ALERT_EMAIL, "Parts4Profits"))
         .setTo([new Recipient(process.env.MAIL_FROM_EMAIL, "Matthew")])
         .setSubject("🚨 eBay Marketplace Deletion Notice Received")
         .setText("Your API has successfully received a marketplace account deletion notification from eBay.");
