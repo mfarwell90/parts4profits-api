@@ -1,23 +1,44 @@
+import { createHash } from 'crypto';
+import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
+
+const mailerSend = new MailerSend({
+  apiKey: process.env.MAILERSEND_API_KEY,
+});
+
 export default async function handler(req, res) {
+  const verificationToken = process.env.EBAY_VERIFICATION_TOKEN;
+  const endpointUrl = 'https://parts4profits.com/api/verify';
+
   if (req.method === 'GET') {
-    const challenge = req.query.challenge_code;
-    const verificationToken = 'wrenchmasterparts4profitsverification';
-    const endpoint = 'https://parts4profits.com/api/verify';
-    const crypto = await import('crypto');
+    const challengeCode = req.query.challenge_code;
 
-    const hash = crypto.createHash('sha256');
-    hash.update(challenge);
+    const hash = createHash('sha256');
+    hash.update(challengeCode);
     hash.update(verificationToken);
-    hash.update(endpoint);
-    const responseHash = hash.digest('hex');
+    hash.update(endpointUrl);
 
-    res.status(200).json({ challengeResponse: responseHash });
-  } else if (req.method === 'POST') {
-    console.log('📩 eBay Deletion Notice Received:', req.body);
+    const challengeResponse = hash.digest('hex');
 
-    // Optional: save this info somewhere
-    res.status(200).json({ success: true });
-  } else {
-    res.status(405).end(); // Method Not Allowed
+    res.setHeader('Content-Type', 'application/json');
+    return res.status(200).json({ challengeResponse });
   }
+
+  if (req.method === 'POST') {
+    try {
+      const emailParams = new EmailParams()
+        .setFrom(new Sender(process.env.MAIL_FROM_EMAIL, "Parts4Profits"))
+        .setTo([new Recipient(process.env.MAIL_FROM_EMAIL, "Matthew")])
+        .setSubject("🚨 eBay Marketplace Deletion Notice Received")
+        .setText("Your API has successfully received a marketplace account deletion notification from eBay.");
+
+      await mailerSend.email.send(emailParams);
+
+      return res.status(200).json({ message: "Notification received and email sent." });
+    } catch (error) {
+      console.error("Error sending email:", error);
+      return res.status(500).json({ error: "Failed to send email." });
+    }
+  }
+
+  return res.status(405).end(); // Method Not Allowed
 }
