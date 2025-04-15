@@ -1,22 +1,15 @@
-// Ensure Vercel parses the request body as JSON
+import { createHash } from 'crypto';
+
 export const config = {
   api: {
     bodyParser: true,
   },
 };
 
-import { createHash } from 'crypto';
-import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
-
-const mailerSend = new MailerSend({
-  apiKey: process.env.MAILERSEND_API_KEY,
-});
-
 export default async function handler(req, res) {
   const verificationToken = process.env.EBAY_VERIFICATION_TOKEN;
   const endpointUrl = 'https://parts4profits.com/api/verify';
 
-  // Handle eBay GET challenge
   if (req.method === 'GET') {
     const challengeCode = req.query.challenge_code;
 
@@ -26,35 +19,37 @@ export default async function handler(req, res) {
     hash.update(endpointUrl);
 
     const challengeResponse = hash.digest('hex');
-
-    res.setHeader('Content-Type', 'application/json');
     return res.status(200).json({ challengeResponse });
   }
 
-  // Handle actual eBay POST notifications
   if (req.method === 'POST') {
+    console.log("🔔 Received POST from eBay:");
+    console.log(JSON.stringify(req.body, null, 2));
+
+    // Optional: Try to send an alert if MailerSend is available
     try {
-      console.log("🔔 Received POST from eBay:");
-      console.log(JSON.stringify(req.body, null, 2));
+      const { MailerSend, EmailParams, Sender, Recipient } = await import('mailersend');
 
-      const event = req.body;
+      if (process.env.MAILERSEND_API_KEY && process.env.ALERT_EMAIL) {
+        const mailerSend = new MailerSend({ apiKey: process.env.MAILERSEND_API_KEY });
 
-      const emailParams = new EmailParams()
-        .setFrom(new Sender(process.env.ALERT_EMAIL, "Parts4Profits"))
-        .setTo([new Recipient(process.env.ALERT_EMAIL, "Matthew")])
-        .setSubject("🚨 eBay Marketplace Deletion Notification")
-        .setText("Your API has successfully received a marketplace account deletion notification from eBay.");
+        const emailParams = new EmailParams()
+          .setFrom(new Sender(process.env.ALERT_EMAIL, "Parts4Profits"))
+          .setTo([new Recipient(process.env.ALERT_EMAIL, "Matthew")])
+          .setSubject("🚨 eBay Marketplace Deletion Notification")
+          .setText("A deletion notification was received.\n\n" + JSON.stringify(req.body, null, 2));
 
-      await mailerSend.email.send(emailParams);
-
-      console.log("✅ Email sent successfully.");
-      return res.status(200).json({ message: "Notification received and email sent." });
-    } catch (error) {
-      console.error("🔥 Error in POST handler:", error);
-      return res.status(500).json({ error: "Failed to handle notification." });
+        await mailerSend.email.send(emailParams);
+        console.log("✅ Email sent.");
+      } else {
+        console.warn("⚠️ MailerSend credentials missing, skipping email alert.");
+      }
+    } catch (e) {
+      console.error("📭 Failed to send alert email:", e.message || e);
     }
+
+    return res.status(200).json({ message: "Logged successfully." });
   }
 
-  // Handle other methods
   return res.status(405).end(); // Method Not Allowed
 }
